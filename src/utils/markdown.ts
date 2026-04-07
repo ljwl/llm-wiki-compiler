@@ -55,6 +55,30 @@ export async function atomicWrite(filePath: string, content: string): Promise<vo
   await rename(tmpPath, filePath);
 }
 
+/**
+ * Extract all source filenames from ^[filename.md] citation markers in a page body.
+ * Handles single citations (^[source.md]) and multi-source (^[a.md, b.md]).
+ * @param body - The markdown body text to parse.
+ * @returns Array of unique source filenames.
+ */
+export function extractCitations(body: string): string[] {
+  const citationPattern = /\^\[([^\]]+)\]/g;
+  const filenames = new Set<string>();
+
+  let match;
+  while ((match = citationPattern.exec(body)) !== null) {
+    const inner = match[1];
+    for (const part of inner.split(",")) {
+      const trimmed = part.trim();
+      if (trimmed.length > 0) {
+        filenames.add(trimmed);
+      }
+    }
+  }
+
+  return [...filenames];
+}
+
 /** Read a file, returning empty string if it doesn't exist. */
 export async function safeReadFile(filePath: string): Promise<string> {
   try {

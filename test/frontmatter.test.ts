@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildFrontmatter, parseFrontmatter } from "../src/utils/markdown.js";
+import { buildFrontmatter, parseFrontmatter, extractCitations } from "../src/utils/markdown.js";
 
 describe("buildFrontmatter", () => {
   it("wraps fields in YAML delimiters", () => {
@@ -64,6 +64,40 @@ describe("parseFrontmatter", () => {
     const content = "---\nsources:\n  - a.md\n  - b.md\n---\nBody.";
     const { meta } = parseFrontmatter(content);
     expect(meta.sources).toEqual(["a.md", "b.md"]);
+  });
+});
+
+describe("extractCitations", () => {
+  it("parses single citations", () => {
+    const body = "Some paragraph text. ^[source.md]";
+    expect(extractCitations(body)).toEqual(["source.md"]);
+  });
+
+  it("parses multi-source citations", () => {
+    const body = "Some paragraph text. ^[a.md, b.md]";
+    const result = extractCitations(body);
+    expect(result).toContain("a.md");
+    expect(result).toContain("b.md");
+    expect(result).toHaveLength(2);
+  });
+
+  it("returns unique filenames", () => {
+    const body = "First paragraph. ^[source.md]\n\nSecond paragraph. ^[source.md]";
+    expect(extractCitations(body)).toEqual(["source.md"]);
+  });
+
+  it("returns empty array for no citations", () => {
+    const body = "A paragraph with no citations at all.";
+    expect(extractCitations(body)).toEqual([]);
+  });
+
+  it("collects citations from multiple paragraphs", () => {
+    const body = "Para one. ^[a.md]\n\nPara two. ^[b.md, c.md]";
+    const result = extractCitations(body);
+    expect(result).toContain("a.md");
+    expect(result).toContain("b.md");
+    expect(result).toContain("c.md");
+    expect(result).toHaveLength(3);
   });
 });
 

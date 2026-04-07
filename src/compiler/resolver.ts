@@ -59,6 +59,16 @@ function isInsideWikilink(text: string, position: number): boolean {
   return closeBefore >= position;
 }
 
+/** Check if a position is inside a ^[...] citation marker. */
+function isInsideCitation(text: string, position: number): boolean {
+  const before = text.lastIndexOf("^[", position);
+  const after = text.indexOf("]", position);
+  if (before === -1 || after === -1) return false;
+
+  const closeBefore = text.indexOf("]", before);
+  return closeBefore >= position;
+}
+
 /** Check if a match is at a word boundary. */
 function isWordBoundary(text: string, start: number, end: number): boolean {
   const before = start === 0 || /[\s,.:;!?()\[\]{}/"']/.test(text[start - 1]);
@@ -88,6 +98,7 @@ function addWikilinks(body: string, titles: PageInfo[], selfTitle: string): stri
 
     for (const m of matches.reverse()) {
       if (isInsideWikilink(result, m.start)) continue;
+      if (isInsideCitation(result, m.start)) continue;
       if (!isWordBoundary(result, m.start, m.end)) continue;
 
       result =
